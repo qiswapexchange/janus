@@ -5,7 +5,7 @@ volumes:
 
 services:
   janus:
-    image: qtum/janus:alejo1
+    image: qtum/janus:raw-tx
     container_name: janus_testchain
     build: 
         context: ../../

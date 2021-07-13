@@ -1,8 +1,6 @@
 package transformer
 
 import (
-	"fmt"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -88,15 +86,7 @@ func (p *ProxyETHGetTransactionReceipt) request(req *qtum.GetTransactionReceiptR
 	r := qtum.TransactionReceipt(*qtumReceipt)
 	ethReceipt.Logs = conversion.ExtractETHLogsFromTransactionReceipt(&r)
 
-	fmt.Println("==> We are calling getrawtransaction now in eth_getTransactionReceipt.go")
-	// qtumTx, err := p.Qtum.GetTransaction(qtumReceipt.TransactionHash)
-	rawTx, err := p.Qtum.GetRawTransaction(qtumReceipt.TransactionHash, true)
-	qtumTx := &qtum.GetTransactionResponse{
-		BlockHash:  rawTx.BlockHash,
-		BlockIndex: 1, // TODO: Possible to get this somewhere?
-		Hex:        rawTx.Hex,
-	}
-
+	qtumTx, err := p.Qtum.GetRawTransaction(qtumReceipt.TransactionHash, false)
 	if err != nil {
 		return nil, errors.WithMessage(err, "couldn't get transaction")
 	}
