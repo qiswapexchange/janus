@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"encoding/json"
+	"math/big"
 
 	"github.com/labstack/echo"
 	"github.com/qtumproject/janus/pkg/conversion"
@@ -57,15 +58,29 @@ func (p *ProxyETHGetLogs) request(req *qtum.SearchLogsRequest) (*eth.GetLogsResp
 
 func (p *ProxyETHGetLogs) ToRequest(ethreq *eth.GetLogsRequest) (*qtum.SearchLogsRequest, error) {
 	//transform EthRequest fromBlock to QtumReq fromBlock:
-	from, err := getBlockNumberByRawParam(p.Qtum, ethreq.FromBlock, true)
-	if err != nil {
-		return nil, err
-	}
-
-	//transform EthRequest toBlock to QtumReq toBlock:
-	to, err := getBlockNumberByRawParam(p.Qtum, ethreq.ToBlock, true)
-	if err != nil {
-		return nil, err
+	var from *big.Int
+	var to *big.Int
+	var err error
+	if len(ethreq.Blockhash) > 0 {
+		// if blockHash exist
+		// TODO - should I validate Blockhash here?
+		blockNumber, err := getBlockNumberByHash(p.Qtum, ethreq.Blockhash)
+		if err != nil {
+			return nil, err
+		}
+		from = new(big.Int).SetUint64(blockNumber)
+		to = new(big.Int).SetUint64(blockNumber)
+	} else {
+		//transform EthRequest fromBlock to QtumReq fromBlock:
+		from, err = getBlockNumberByRawParam(p.Qtum, ethreq.FromBlock, true)
+		if err != nil {
+			return nil, err
+		}
+		//transform EthRequest toBlock to QtumReq toBlock:
+		to, err = getBlockNumberByRawParam(p.Qtum, ethreq.ToBlock, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	//transform EthReq address to QtumReq address:
@@ -87,6 +102,7 @@ func (p *ProxyETHGetLogs) ToRequest(ethreq *eth.GetLogsRequest) (*qtum.SearchLog
 		}
 	}
 
+	//Todo for now ignore topic?
 	//transform EthReq topics to QtumReq topics:
 	topics, err := eth.TranslateTopics(ethreq.Topics)
 	if err != nil {
